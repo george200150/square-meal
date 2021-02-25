@@ -1,0 +1,642 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 10</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+
+var config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 600,
+    // width: 1920,
+    // height: 1080,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 0 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    },
+    input: {
+        keyboard: {
+            target: window
+        }
+    }
+};
+
+var keyObj_W;
+var keyObj_A;
+var keyObj_S;
+var keyObj_D;
+
+
+var player;
+var villain;
+var steel_bricks;
+var wood_bricks;
+var bombs;
+var platforms;
+var cursors;
+var score = 0;
+var scoreVillain = 0;
+var gameOver = false;
+var gameOverVillain = false;
+var scoreText;
+var scoreTextVillain;
+
+var game = new Phaser.Game(config);
+
+var player_has_item = false;
+var player_item = null;
+
+var villain_has_item = false;
+var villain_item = null;
+
+
+var W_pressed = false;
+var A_pressed = false;
+var S_pressed = false;
+var D_pressed = false;
+function preload ()
+{
+    this.load.image('bkg', 'assets/background.png');
+    this.load.image('border', 'assets/border.png');
+    this.load.image('border_vertical', 'assets/border_vertical.png');
+    this.load.image('steel', 'assets/steel.png');
+    this.load.image('wood', 'assets/wood.png');
+
+    // this.load.image('star', 'assets/star.png');
+    // this.load.image('bomb', 'assets/bomb.png');
+    this.load.spritesheet('dude', 'assets/dude2.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.spritesheet('villain', 'assets/villain.png', { frameWidth: 32, frameHeight: 48 });
+}
+
+function create ()
+{
+    //  A simple background for our game
+    this.add.image(400, 300, 'bkg');
+
+    //  The platforms group contains the ground and the 2 ledges we can jump on
+    platforms = this.physics.add.staticGroup();
+    steel_bricks = this.physics.add.staticGroup();
+    wood_bricks = this.physics.add.staticGroup();
+
+    //  Here we create the ground.
+    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+    platforms.create(200, 584, 'border').setScale(1).refreshBody();
+    platforms.create(600, 584, 'border').setScale(1).refreshBody();
+
+    platforms.create(200, 16, 'border').setScale(1).refreshBody();
+    platforms.create(600, 16, 'border').setScale(1).refreshBody();
+
+    platforms.create(16, 200, 'border_vertical').setScale(1).refreshBody();
+    platforms.create(16, 600, 'border_vertical').setScale(1).refreshBody();
+
+    platforms.create(784, 200, 'border_vertical').setScale(1).refreshBody();
+    platforms.create(784, 600, 'border_vertical').setScale(1).refreshBody();
+
+
+    // steel_bricks.create(58, 58, 'steel').setScale(1).refreshBody();
+    // steel_bricks.create(742, 58, 'steel').setScale(1).refreshBody();
+    // wood_bricks.create(58, 542, 'wood').setScale(1).refreshBody();
+    // wood_bricks.create(742, 542, 'wood').setScale(1).refreshBody();
+
+
+    // The player and its settings
+    player = this.physics.add.sprite(100, 450, 'dude');
+    villain = this.physics.add.sprite(700, 150, 'villain');
+
+    //  Player physics properties
+    player.setCollideWorldBounds(true);
+    villain.setCollideWorldBounds(true);
+
+    //  Our player animations, turning, walking left and walking right.
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'up',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+
+    // this.anims.create({
+    //     key: 'turn',
+    //     frames: [ { key: 'dude', frame: 4 } ],
+    //     frameRate: 20
+    // });
+    this.anims.create({
+        key: 'turn_down',
+        frames: [ { key: 'dude', frame: 4 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_left',
+        frames: [ { key: 'dude', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_right',
+        frames: [ { key: 'dude', frame: 5 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_up',
+        frames: [ { key: 'dude', frame: 9 } ],
+        frameRate: 20
+    });
+
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'down',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+
+
+
+
+
+    //  Our villain animations, turning, walking left and walking right.
+    this.anims.create({
+        key: 'left_villain',
+        frames: this.anims.generateFrameNumbers('villain', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'up_villain',
+        frames: this.anims.generateFrameNumbers('villain', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn_down_villain',
+        frames: [ { key: 'villain', frame: 4 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_left_villain',
+        frames: [ { key: 'villain', frame: 0 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_right_villain',
+        frames: [ { key: 'villain', frame: 5 } ],
+        frameRate: 20
+    });
+    this.anims.create({
+        key: 'turn_up_villain',
+        frames: [ { key: 'villain', frame: 9 } ],
+        frameRate: 20
+    });
+
+
+
+
+    this.anims.create({
+        key: 'right_villain',
+        frames: this.anims.generateFrameNumbers('villain', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    this.anims.create({
+        key: 'down_villain',
+        frames: this.anims.generateFrameNumbers('villain', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+
+
+
+
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+
+
+    steel_bricks = this.physics.add.group({
+        key: 'steel',
+        repeat: 2,
+        setXY: { x: 114, y: 156, stepX: 50 }
+    });
+
+    // steel_bricks = this.physics.add.group({
+    //     key: 'steel',
+    //     repeat: 2,
+    //     setXY: { x: 686, y: 444, stepX: 50 }
+    // });
+    steel_bricks.create(586, 444, 'steel');
+    steel_bricks.create(636, 444, 'steel');
+    steel_bricks.create(686, 444, 'steel');
+
+    wood_bricks = this.physics.add.group({
+        key: 'wood',
+        repeat: 10,
+        setXY: { x: 408, y: 133, stepY: 30 }
+    });
+
+
+    // stars.children.iterate(function (child) {
+    steel_bricks.children.iterate(function (child) {
+
+        //  Give each star a slightly different bounce
+        child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+
+    });
+
+    bombs = this.physics.add.group();
+
+    //  The score
+    scoreText = this.add.text(32, 16, 'home: 0', { fontSize: '32px', fill: '#FFF' });
+    scoreTextVillain = this.add.text(632, 16, 'away: 0', { fontSize: '32px', fill: '#FFF' });
+
+    //  Collide the player and the stars with the platforms
+    this.physics.add.collider(player, platforms);
+    this.physics.add.collider(villain, platforms);
+    this.physics.add.collider(steel_bricks, platforms, (brick, platform)=>{brick.setVelocity(0);}, null, this);
+    this.physics.add.collider(wood_bricks, platforms, (brick, platform)=>{brick.setVelocity(0);}, null, this);
+    // this.physics.add.collider(bombs, platforms);
+
+    //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
+    this.physics.add.overlap(player, steel_bricks, get_object, null, this);
+    this.physics.add.overlap(player, wood_bricks, get_object, null, this);
+    this.physics.add.collider(player, steel_bricks);
+    this.physics.add.collider(player, wood_bricks);
+
+    //  Checks to see if the villain overlaps with any of the stars, if he does call the collectStar function
+    this.physics.add.overlap(villain, steel_bricks, get_object_villain, null, this);
+    this.physics.add.overlap(villain, wood_bricks, get_object_villain, null, this);
+    this.physics.add.collider(villain, steel_bricks);
+    this.physics.add.collider(villain, wood_bricks);
+
+    this.physics.add.collider(steel_bricks, villain);
+    this.physics.add.collider(wood_bricks, villain);
+
+    this.physics.add.collider(steel_bricks, wood_bricks);
+    this.physics.add.collider(wood_bricks, steel_bricks);
+    this.physics.add.overlap(wood_bricks, steel_bricks, do_not_overlap, null, this);
+    this.physics.add.overlap(steel_bricks, wood_bricks, do_not_overlap, null, this);
+
+    this.physics.add.collider(steel_bricks, steel_bricks);
+    this.physics.add.collider(wood_bricks, wood_bricks);
+    this.physics.add.overlap(steel_bricks, steel_bricks, do_not_overlap, null, this);
+    this.physics.add.overlap(wood_bricks, wood_bricks, do_not_overlap, null, this);
+
+    keyObj_W = this.input.keyboard.addKey('W');  // Get key object
+    keyObj_A = this.input.keyboard.addKey('A');  // Get key object
+    keyObj_S = this.input.keyboard.addKey('S');  // Get key object
+    keyObj_D = this.input.keyboard.addKey('D');  // Get key object
+
+}
+
+var last_direction_pressed_villain = 'down'
+function get_object_villain(villain, brick) {
+        if (brick.body.velocity.x !== 0 || brick.body.velocity.y !== 0 ) { // villain dies if they they touch a moving brick
+            // this.physics.pause();
+            villain.setTint(0xff0000);
+            villain.anims.play('turn');
+            gameOverVillain = true;
+        }
+
+        if (villain_has_item) { // if mouth full => nothing
+            villain.setVelocity(0);
+        }
+        else { // if villain can eat, then eat item when colliding with it
+            villain_has_item = true;
+            if (brick.texture.key === 'steel') {
+                villain_item = 'steel';
+            }
+            else if (brick.texture.key === 'wood') {
+                villain_item = 'wood';
+            }
+            else {
+                villain_item = null;
+            }
+
+            brick.disableBody(true, true);
+        }
+    }
+
+function do_not_overlap(brick1, brick2) {
+    brick1.setVelocity(0);
+    brick2.setVelocity(0);
+}
+
+
+
+
+
+
+
+
+
+var last_direction_pressed = 'down'
+function update ()
+{
+    player.setVelocity(0);
+    villain.setVelocity(0);
+    if (gameOver)
+    {
+        scoreVillain += 1;
+        scoreTextVillain.setText('away: ' + scoreVillain);
+
+        player.x = 100;
+        player.y = 450;
+
+        player.setTint(0xFFFFFF);
+        gameOver = false;
+
+        player_has_item = false; // reset to initial state
+        player_item = null;
+    }
+
+    if (gameOverVillain)
+    {
+        score += 1;
+        scoreText.setText('home: ' + score);
+
+        villain.x = 700;
+        villain.y = 150;
+
+        villain.setTint(0xFFFFFF);
+        gameOverVillain = false;
+
+        villain_has_item = false;
+        villain_item = null;
+    }
+
+    if (cursors.left.isDown)
+    {
+        last_direction_pressed = 'left'
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+    }
+    else if (cursors.shift.isDown && player_has_item)
+    {
+        player_has_item = false;
+        var brick;
+        var brick_velocityX = 0;
+        var brick_velocityY = 0;
+        var bricks;
+        var material;
+        if (player_item === 'steel'){
+            material = 'steel';
+            bricks = steel_bricks;
+        }
+        else if (player_item === 'wood'){
+            material = 'wood';
+            bricks = wood_bricks;
+        }
+        else{
+            console.log("pass")
+        }
+
+
+        if (last_direction_pressed === 'left') {
+            brick = bricks.create(player.x - 52, player.y, material);
+            brick_velocityX = -1;
+        }
+        else if (last_direction_pressed === 'right') {
+            brick = bricks.create(player.x + 52, player.y, material);
+            brick_velocityX = 1;
+        }
+        else if (last_direction_pressed === 'up') {
+            brick = bricks.create(player.x, player.y - 52, material);
+            brick_velocityY = -1;
+        }
+        else if (last_direction_pressed === 'down') {
+            brick = bricks.create(player.x, player.y + 52, material);
+            brick_velocityY = 1;
+        }
+
+
+
+        if (player_item === 'steel'){
+            brick.setBounce(0);
+            brick.setDrag(70, 70);
+            brick.setCollideWorldBounds(true);
+            brick.allowGravity = false;
+            brick.setVelocity(160 * brick_velocityX, 160 * brick_velocityY);
+        }
+        else if (player_item === 'wood'){
+            brick.setBounce(0);
+            brick.setDrag(30, 30);
+            brick.setCollideWorldBounds(true);
+            brick.allowGravity = false;
+            brick.setVelocity(200 * brick_velocityX, 200 * brick_velocityY);
+        }
+        else{
+            console.log("pass")
+        }
+    }
+    else if (cursors.right.isDown)
+    {
+        last_direction_pressed = 'right'
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }
+    else if (cursors.up.isDown)
+    {
+        last_direction_pressed = 'up'
+        player.setVelocityY(-160);
+
+        player.anims.play('up', true);
+    }
+    else if (cursors.down.isDown)
+    {
+        last_direction_pressed = 'down'
+        player.setVelocityY(160);
+
+        player.anims.play('down', true);
+    }
+
+    else
+    {
+        if (last_direction_pressed === 'left') {
+            player.anims.play('turn_left');
+        }
+        else if (last_direction_pressed === 'right') {
+            player.anims.play('turn_right');
+        }
+        else if (last_direction_pressed === 'up') {
+            player.anims.play('turn_up');
+        }
+        else if (last_direction_pressed === 'down') {
+            player.anims.play('turn_down');
+        }
+    }
+
+    // villain.setVelocity(-player.body.velocity.x, -player.body.velocity.y);
+    if (keyObj_A.isDown)
+    {
+        last_direction_pressed_villain = 'left'
+        villain.setVelocityX(-160);
+
+        villain.anims.play('left_villain', true);
+    }
+    else if (cursors.space.isDown && villain_has_item)
+    {
+        villain_has_item = false;
+        var brick;
+        var brick_velocityX = 0;
+        var brick_velocityY = 0;
+        var bricks;
+        var material;
+        if (villain_item === 'steel'){
+            material = 'steel';
+            bricks = steel_bricks;
+        }
+        else if (villain_item === 'wood'){
+            material = 'wood';
+            bricks = wood_bricks;
+        }
+        else{
+            console.log("pass")
+        }
+
+
+        if (last_direction_pressed_villain === 'left') {
+            brick = bricks.create(villain.x - 52, villain.y, material);
+            brick_velocityX = -1;
+        }
+        else if (last_direction_pressed_villain === 'right') {
+            brick = bricks.create(villain.x + 52, villain.y, material);
+            brick_velocityX = 1;
+        }
+        else if (last_direction_pressed_villain === 'up') {
+            brick = bricks.create(villain.x, villain.y - 52, material);
+            brick_velocityY = -1;
+        }
+        else if (last_direction_pressed_villain === 'down') {
+            brick = bricks.create(villain.x, villain.y + 52, material);
+            brick_velocityY = 1;
+        }
+
+
+
+        if (villain_item === 'steel'){
+            brick.setBounce(0);
+            brick.setDrag(70, 70);
+            brick.setCollideWorldBounds(true);
+            brick.allowGravity = false;
+            brick.setVelocity(160 * brick_velocityX, 160 * brick_velocityY);
+        }
+        else if (villain_item === 'wood'){
+            brick.setBounce(0);
+            brick.setDrag(30, 30);
+            brick.setCollideWorldBounds(true);
+            brick.allowGravity = false;
+            brick.setVelocity(200 * brick_velocityX, 200 * brick_velocityY);
+        }
+        else{
+            console.log("pass")
+        }
+    }
+    else if (keyObj_D.isDown)
+    {
+        last_direction_pressed_villain = 'right'
+        villain.setVelocityX(160);
+
+        villain.anims.play('right_villain', true);
+    }
+    else if (keyObj_W.isDown)
+    {
+        last_direction_pressed_villain = 'up'
+        villain.setVelocityY(-160);
+
+        villain.anims.play('up_villain', true);
+    }
+    else if (keyObj_S.isDown)
+    {
+        last_direction_pressed_villain = 'down'
+        villain.setVelocityY(160);
+
+        villain.anims.play('down_villain', true);
+    }
+
+    else
+    {
+        if (last_direction_pressed_villain === 'left') {
+            villain.anims.play('turn_left_villain');
+        }
+        else if (last_direction_pressed_villain === 'right') {
+            villain.anims.play('turn_right_villain');
+        }
+        else if (last_direction_pressed_villain === 'up') {
+            villain.anims.play('turn_up_villain');
+        }
+        else if (last_direction_pressed_villain === 'down') {
+            villain.anims.play('turn_down_villain');
+        }
+    }
+}
+
+
+
+function get_object (player, brick)
+{
+    if (brick.body.velocity.x !== 0 || brick.body.velocity.y !== 0 ) { // player dies if they they touch a moving brick
+        // this.physics.pause();
+        player.setTint(0xff0000);
+        player.anims.play('turn');
+        gameOver = true;
+    }
+
+    if (player_has_item) { // if mouth full => nothing
+        player.setVelocity(0);
+    }
+    else { // if player can eat, then eat item when colliding with it
+        player_has_item = true;
+        if (brick.texture.key === 'steel') {
+            player_item = 'steel';
+        }
+        else if (brick.texture.key === 'wood') {
+            player_item = 'wood';
+        }
+        else {
+            player_item = null;
+        }
+
+        brick.disableBody(true, true);
+    }
+}
+
+
+</script>
+
+</body>
+</html>
