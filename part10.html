@@ -411,6 +411,17 @@ function update ()
         villain_item = null;
     }
 
+
+    if (steel_bricks.countActive(true) === 0 && wood_bricks.countActive(true) === 0 && player_has_item === false && villain_has_item === false) {
+        // cannot score other way than collecting apples => finalise
+        showEnd()
+        this.physics.pause();
+        return;
+    }
+
+
+
+
     if (cursors.left.isDown)
     {
         last_direction_pressed = 'left'
@@ -667,10 +678,25 @@ function collect_apple(player, apple) {
         apple_collectibles.children.iterate(function (child) {
             var x = (player.x < 400) ? Phaser.Math.Between(400, 750) : Phaser.Math.Between(50, 400);
             var y = (player.y < 400) ? Phaser.Math.Between(300, 550) : Phaser.Math.Between(50, 550);
-            var y = (player.y < 400) ? Phaser.Math.Between(300, 550) : Phaser.Math.Between(50, 550);
 
             child.enableBody(true, x, y, true, true);
         });
+    }
+}
+
+
+
+var ended_and_shown = false;
+function showEnd() {
+    if (!ended_and_shown) {
+        if (score > scoreVillain) {
+            alert("HOME won!");
+        } else if (score < scoreVillain) {
+            alert("AWAY won!");
+        } else {
+            alert("TIE!");
+        }
+        ended_and_shown = true;
     }
 }
 
