@@ -80,6 +80,7 @@ function preload ()
     this.load.image('border_vertical', 'assets/border_vertical.png');
     this.load.image('steel', 'assets/steel.png');
     this.load.image('wood', 'assets/wood.png');
+    this.load.image('apple', 'assets/apple.png');
 
     // this.load.image('star', 'assets/star.png');
     // this.load.image('bomb', 'assets/bomb.png');
@@ -96,6 +97,7 @@ function create ()
     platforms = this.physics.add.staticGroup();
     steel_bricks = this.physics.add.staticGroup();
     wood_bricks = this.physics.add.staticGroup();
+    apple_collectibles = this.physics.add.staticGroup();
 
     //  Here we create the ground.
     //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
@@ -110,6 +112,15 @@ function create ()
 
     platforms.create(784, 200, 'border_vertical').setScale(1).refreshBody();
     platforms.create(784, 600, 'border_vertical').setScale(1).refreshBody();
+
+    // apple_collectibles.create(586, 524, 'apple').setScale(0.28).refreshBody();
+
+    apple_collectibles = this.physics.add.group({
+        key: 'apple',
+        repeat: 0,
+        setScale: { x: 0.28, y: 0.28},
+        setXY: { x: 586, y: 524, stepX: 0 }
+    });
 
 
     // steel_bricks.create(58, 58, 'steel').setScale(1).refreshBody();
@@ -319,6 +330,9 @@ function create ()
     keyObj_S = this.input.keyboard.addKey('S');  // Get key object
     keyObj_D = this.input.keyboard.addKey('D');  // Get key object
 
+    this.physics.add.overlap(player, apple_collectibles, collect_apple, null, this);
+    this.physics.add.overlap(villain, apple_collectibles, collect_apple, null, this);
+
 }
 
 var last_direction_pressed_villain = 'down'
@@ -369,7 +383,7 @@ function update ()
     villain.setVelocity(0);
     if (gameOver)
     {
-        scoreVillain += 1;
+        scoreVillain += 10;
         scoreTextVillain.setText('away: ' + scoreVillain);
 
         player.x = 100;
@@ -384,7 +398,7 @@ function update ()
 
     if (gameOverVillain)
     {
-        score += 1;
+        score += 10;
         scoreText.setText('home: ' + score);
 
         villain.x = 700;
@@ -635,6 +649,30 @@ function get_object (player, brick)
     }
 }
 
+
+function collect_apple(player, apple) {
+    if (player.texture.key === 'dude') {
+        score += 1;
+        scoreText.setText('home: ' + score);
+    }
+    else{
+        scoreVillain += 1;
+        scoreTextVillain.setText('away: ' + scoreVillain);
+    }
+
+
+    apple.disableBody(true, true);
+    if (apple_collectibles.countActive(true) === 0) {
+        //  A new batch of stars to collect
+        apple_collectibles.children.iterate(function (child) {
+            var x = (player.x < 400) ? Phaser.Math.Between(400, 750) : Phaser.Math.Between(50, 400);
+            var y = (player.y < 400) ? Phaser.Math.Between(300, 550) : Phaser.Math.Between(50, 550);
+            var y = (player.y < 400) ? Phaser.Math.Between(300, 550) : Phaser.Math.Between(50, 550);
+
+            child.enableBody(true, x, y, true, true);
+        });
+    }
+}
 
 </script>
 
