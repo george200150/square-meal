@@ -130,8 +130,8 @@
         this.load.image('wood', 'assets/wood.png');
         this.load.image('apple', 'assets/apple.png');
 
-        this.load.spritesheet('dude', 'assets/dude2.png', {frameWidth: 32, frameHeight: 48});
-        this.load.spritesheet('villain', 'assets/villain.png', {frameWidth: 32, frameHeight: 48});
+        this.load.spritesheet('dude', 'assets/dude3.fw.png', {frameWidth: 32, frameHeight: 48});
+        this.load.spritesheet('villain', 'assets/villain3.fw.png', {frameWidth: 32, frameHeight: 48});
     }
 
     function createAnim(context, the_key='left', sprite='dude', start=0, stop=3, fps=10, rep=-1) {
@@ -215,25 +215,24 @@
         villain.setCollideWorldBounds(true);
 
         //  Our player animations, turning, walking left and walking right.
+        createAnim(this, 'up', 'dude', 12, 15, 10, -1)
         createAnim(this, 'left', 'dude', 0, 3, 10, -1)
-        createAnim(this, 'up', 'dude', 0, 3, 10, -1)
-        createAnim(this, 'right', 'dude', 5, 8, 10, -1)
-        createAnim(this, 'down', 'dude', 5, 8, 10, -1)
-        createStatic(this, 'turn_down', 'dude', 4, 20)
+        createAnim(this, 'down', 'dude', 4, 7, 10, -1)
+        createAnim(this, 'right', 'dude', 8, 11, 10, -1)
+        createStatic(this, 'turn_up', 'dude', 12, 20)
         createStatic(this, 'turn_left', 'dude', 0, 20)
-        createStatic(this, 'turn_right', 'dude', 5, 20)
-        createStatic(this, 'turn_up', 'dude', 9, 20)
-
+        createStatic(this, 'turn_down', 'dude', 4, 20)
+        createStatic(this, 'turn_right', 'dude', 8, 20)
 
         //  Our villain animations, turning, walking left and walking right.
+        createAnim(this, 'up_villain', 'villain', 12, 15, 10, -1)
         createAnim(this, 'left_villain', 'villain', 0, 3, 10, -1)
-        createAnim(this, 'up_villain', 'villain', 0, 3, 10, -1)
-        createAnim(this, 'right_villain', 'villain', 5, 8, 10, -1)
-        createAnim(this, 'down_villain', 'villain', 5, 8, 10, -1)
-        createStatic(this, 'turn_down_villain', 'villain', 4, 20)
+        createAnim(this, 'down_villain', 'villain', 4, 7, 10, -1)
+        createAnim(this, 'right_villain', 'villain', 8, 11, 10, -1)
+        createStatic(this, 'turn_up_villain', 'villain', 12, 20)
         createStatic(this, 'turn_left_villain', 'villain', 0, 20)
-        createStatic(this, 'turn_right_villain', 'villain', 5, 20)
-        createStatic(this, 'turn_up_villain', 'villain', 9, 20)
+        createStatic(this, 'turn_down_villain', 'villain', 4, 20)
+        createStatic(this, 'turn_right_villain', 'villain', 8, 20)
 
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
@@ -396,59 +395,33 @@
     function checkPlayerLogic(player, has_item_OBJECT, item_OBJECT,
                               isThrowPressed, isUpPressed, isLeftPressed, isDownPressed, isRightPressed,
                               direction_pressed_OBJECT) {
-        // villain.setVelocity(-player.body.velocity.x, -player.body.velocity.y);
-
-        let anim_W = 'up';
-        let anim_A = 'left';
-        let anim_S = 'down';
-        let anim_D = 'right';
-        let static_W = 'turn_up';
-        let static_A = 'turn_left';
-        let static_S = 'turn_down';
-        let static_D = 'turn_right';
+        let static_anim = 'turn_';
+        let add_on = '';
         // set the animation according to the player
         if (player.texture.key === 'villain') {
-            let add_on = '_villain';
-            anim_W += add_on;
-            anim_A += add_on;
-            anim_S += add_on;
-            anim_D += add_on;
-            static_W += add_on;
-            static_A += add_on;
-            static_S += add_on;
-            static_D += add_on;
+            add_on = '_villain';
         }
         // attacking has priority in what regards movement
         if (isThrowPressed && has_item_OBJECT.get()) {
             throwBrick(player, has_item_OBJECT, item_OBJECT, direction_pressed_OBJECT.get());
         } else if (isUpPressed) { // check W / ^
-            direction_pressed_OBJECT.set('up');
-            player.setVelocityY(-160);
-            player.anims.play(anim_W, true);
+            setPlayerMovement(player, direction_pressed_OBJECT, 'up', 0, -160, add_on);
         } else if (isLeftPressed) { // check A / <
-            direction_pressed_OBJECT.set('left');
-            player.setVelocityX(-160);
-            player.anims.play(anim_A, true);
+            setPlayerMovement(player, direction_pressed_OBJECT, 'left', -160, 0, add_on);
         } else if (isDownPressed) { // check S / v
-            direction_pressed_OBJECT.set('down');
-            player.setVelocityY(160);
-            player.anims.play(anim_S, true);
+            setPlayerMovement(player, direction_pressed_OBJECT, 'down', 0, 160, add_on);
         } else if (isRightPressed) { // check D / >
-            direction_pressed_OBJECT.set('right');
-            player.setVelocityX(160);
-            player.anims.play(anim_D, true);
+            setPlayerMovement(player, direction_pressed_OBJECT, 'right', 160, 0, add_on);
         }
         else {
-            if (direction_pressed_OBJECT.get() === 'up') {
-                player.anims.play(static_W);
-            } else if (direction_pressed_OBJECT.get() === 'left') {
-                player.anims.play(static_A);
-            } else if (direction_pressed_OBJECT.get() === 'down') {
-                player.anims.play(static_S);
-            } else if (direction_pressed_OBJECT.get() === 'right') {
-                player.anims.play(static_D);
-            }
+            player.anims.play(static_anim + direction_pressed_OBJECT.get() + add_on);
         }
+    }
+
+    function setPlayerMovement(player, direction_pressed_OBJECT, direction, velocityX, velocityY, add_on) {
+        direction_pressed_OBJECT.set(direction);
+        player.setVelocity(velocityX, velocityY);
+        player.anims.play(direction_pressed_OBJECT.get() + add_on, true);
     }
 
 
@@ -481,7 +454,8 @@
     function get_object (gameOver_OBJECT, has_item_OBJECT, item_OBJECT, player, brick) {
         // player dies if they touch any moving brick (pushing is not considered movement)
         if (brick.body.velocity.x !== 0 || brick.body.velocity.y !== 0) {
-            // TODO: smarter way to inform about respawn
+            // TODO: smarter way to inform about respawn (create something as a grave...)
+            apple_collectables.create(player.x, player.y, 'apple');
             gameOver_OBJECT.set(true);
         }
 
