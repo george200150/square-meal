@@ -14,7 +14,7 @@
 <body>
 
 <script type="text/javascript">
-    
+
     const config = {
         type: Phaser.AUTO,
         width: 800,
@@ -90,6 +90,10 @@
         get: ()=>{return scoreText},
         set: (value)=>{scoreText.setText(value); }
     };
+    let last_direction_pressed_OBJECT = {
+        get: ()=>{return last_direction_pressed},
+        set: (value)=>{last_direction_pressed = value; }
+    };
 
 
     // player2's features
@@ -112,6 +116,10 @@
     let villain_scoreText_OBJECT = {
         get: ()=>{return scoreTextVillain},
         set: (value)=>{scoreTextVillain.setText(value);}
+    };
+    let last_direction_pressed_villain_OBJECT = {
+        get: ()=>{return last_direction_pressed_villain},
+        set: (value)=>{last_direction_pressed_villain = value; }
     };
 
     function preload () {
@@ -139,6 +147,31 @@
             key: the_key,
             frames: [{key: sprite, frame: frame}],
             frameRate: fps
+        });
+    }
+
+    function generateMap(context) {
+        // TODO: better map generation!
+        apple_collectables = context.physics.add.group({
+            key: 'apple',
+            repeat: 1,
+            setScale: {x: 0.28, y: 0.28},
+            // setXY: { x: 408, y: 73, stepX: 0, stepY: 451 },      // aesthetic reasons
+            setXY: {x: 400, y: 73, stepX: 0, stepY: 451},           // balancing reasons
+        });
+        steel_bricks = context.physics.add.group({
+            key: 'steel',
+            repeat: 2,
+            setXY: {x: 114, y: 156, stepX: 50}
+        });
+        steel_bricks.create(586, 444, 'steel');
+        steel_bricks.create(636, 444, 'steel');
+        steel_bricks.create(686, 444, 'steel');
+        wood_bricks = context.physics.add.group({
+            key: 'wood',
+            repeat: 10,
+            setXY: {x: 400, y: 133, stepY: 30}          // balancing reasons
+            // setXY: {x: 408, y: 133, stepY: 30}       // aesthetic reasons
         });
     }
 
@@ -205,28 +238,7 @@
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
 
-
-        // TODO: better map generation!
-        apple_collectables = this.physics.add.group({
-            key: 'apple',
-            repeat: 1,
-            setScale: {x: 0.28, y: 0.28},
-            // setXY: { x: 408, y: 73, stepX: 0, stepY: 451 },  // aesthetic reasons
-            setXY: {x: 400, y: 73, stepX: 0, stepY: 451},     // balancing reasons
-        });
-        steel_bricks = this.physics.add.group({
-            key: 'steel',
-            repeat: 2,
-            setXY: {x: 114, y: 156, stepX: 50}
-        });
-        steel_bricks.create(586, 444, 'steel');
-        steel_bricks.create(636, 444, 'steel');
-        steel_bricks.create(686, 444, 'steel');
-        wood_bricks = this.physics.add.group({
-            key: 'wood',
-            repeat: 10,
-            setXY: {x: 408, y: 133, stepY: 30}
-        });
+        generateMap(this);
 
         //  The score
         scoreText = this.add.text(30, 2, 'home: 0', {fontSize: '32px', fill: '#FFF'});
@@ -381,79 +393,64 @@
     }
 
 
-    function checkPlayer1Logic() {
-        if (cursors.left.isDown) {
-            last_direction_pressed = 'left'
-            player.setVelocityX(-160);
-
-            player.anims.play('left', true);
-        } else if (cursors.shift.isDown && player_has_item) {
-            throwBrick(player, player_has_item_OBJECT, player_item_OBJECT, last_direction_pressed);
-        } else if (cursors.right.isDown) {
-            last_direction_pressed = 'right'
-            player.setVelocityX(160);
-
-            player.anims.play('right', true);
-        } else if (cursors.up.isDown) {
-            last_direction_pressed = 'up'
-            player.setVelocityY(-160);
-
-            player.anims.play('up', true);
-        } else if (cursors.down.isDown) {
-            last_direction_pressed = 'down'
-            player.setVelocityY(160);
-
-            player.anims.play('down', true);
-        } else {
-            if (last_direction_pressed === 'left') {
-                player.anims.play('turn_left');
-            } else if (last_direction_pressed === 'right') {
-                player.anims.play('turn_right');
-            } else if (last_direction_pressed === 'up') {
-                player.anims.play('turn_up');
-            } else if (last_direction_pressed === 'down') {
-                player.anims.play('turn_down');
-            }
-        }
-    }
-
-
-    function checkPlayer2Logic() {
+    function checkPlayerLogic(player, has_item_OBJECT, item_OBJECT,
+                              isThrowPressed, isUpPressed, isLeftPressed, isDownPressed, isRightPressed,
+                              direction_pressed_OBJECT) {
         // villain.setVelocity(-player.body.velocity.x, -player.body.velocity.y);
-        if (keyObj_A.isDown) {
-            last_direction_pressed_villain = 'left'
-            villain.setVelocityX(-160);
 
-            villain.anims.play('left_villain', true);
-        } else if (cursors.space.isDown && villain_has_item) {
-            throwBrick(villain, villain_has_item_OBJECT, villain_item_OBJECT, last_direction_pressed_villain);
-        } else if (keyObj_D.isDown) {
-            last_direction_pressed_villain = 'right'
-            villain.setVelocityX(160);
-
-            villain.anims.play('right_villain', true);
-        } else if (keyObj_W.isDown) {
-            last_direction_pressed_villain = 'up'
-            villain.setVelocityY(-160);
-
-            villain.anims.play('up_villain', true);
-        } else if (keyObj_S.isDown) {
-            last_direction_pressed_villain = 'down'
-            villain.setVelocityY(160);
-
-            villain.anims.play('down_villain', true);
-        } else {
-            if (last_direction_pressed_villain === 'left') {
-                villain.anims.play('turn_left_villain');
-            } else if (last_direction_pressed_villain === 'right') {
-                villain.anims.play('turn_right_villain');
-            } else if (last_direction_pressed_villain === 'up') {
-                villain.anims.play('turn_up_villain');
-            } else if (last_direction_pressed_villain === 'down') {
-                villain.anims.play('turn_down_villain');
+        let anim_W = 'up';
+        let anim_A = 'left';
+        let anim_S = 'down';
+        let anim_D = 'right';
+        let static_W = 'turn_up';
+        let static_A = 'turn_left';
+        let static_S = 'turn_down';
+        let static_D = 'turn_right';
+        // set the animation according to the player
+        if (player.texture.key === 'villain') {
+            let add_on = '_villain';
+            anim_W += add_on;
+            anim_A += add_on;
+            anim_S += add_on;
+            anim_D += add_on;
+            static_W += add_on;
+            static_A += add_on;
+            static_S += add_on;
+            static_D += add_on;
+        }
+        // attacking has priority in what regards movement
+        if (isThrowPressed && has_item_OBJECT.get()) {
+            throwBrick(player, has_item_OBJECT, item_OBJECT, direction_pressed_OBJECT.get());
+        } else if (isUpPressed) { // check W / ^
+            direction_pressed_OBJECT.set('up');
+            player.setVelocityY(-160);
+            player.anims.play(anim_W, true);
+        } else if (isLeftPressed) { // check A / <
+            direction_pressed_OBJECT.set('left');
+            player.setVelocityX(-160);
+            player.anims.play(anim_A, true);
+        } else if (isDownPressed) { // check S / v
+            direction_pressed_OBJECT.set('down');
+            player.setVelocityY(160);
+            player.anims.play(anim_S, true);
+        } else if (isRightPressed) { // check D / >
+            direction_pressed_OBJECT.set('right');
+            player.setVelocityX(160);
+            player.anims.play(anim_D, true);
+        }
+        else {
+            if (direction_pressed_OBJECT.get() === 'up') {
+                player.anims.play(static_W);
+            } else if (direction_pressed_OBJECT.get() === 'left') {
+                player.anims.play(static_A);
+            } else if (direction_pressed_OBJECT.get() === 'down') {
+                player.anims.play(static_S);
+            } else if (direction_pressed_OBJECT.get() === 'right') {
+                player.anims.play(static_D);
             }
         }
     }
+
 
     function update () {
         player.setVelocity(0);
@@ -469,8 +466,14 @@
             return;
         }
 
-        checkPlayer1Logic();
-        checkPlayer2Logic()
+        // player 1: W A S D + SPACE
+        checkPlayerLogic(player, player_has_item_OBJECT, player_item_OBJECT,
+            cursors.shift.isDown, cursors.up.isDown, cursors.left.isDown, cursors.down.isDown, cursors.right.isDown,
+            last_direction_pressed_OBJECT)
+        // player 2: ^ < v > + SHIFT
+        checkPlayerLogic(villain, villain_has_item_OBJECT, villain_item_OBJECT,
+            cursors.space.isDown, keyObj_W.isDown, keyObj_A.isDown, keyObj_S.isDown, keyObj_D.isDown,
+            last_direction_pressed_villain_OBJECT)
     }
 
 
