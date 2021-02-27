@@ -47,6 +47,7 @@
 
     let player;
     let villain;
+    let explosion;
     let steel_bricks;
     let wood_bricks;
     let apple_collectables;
@@ -132,6 +133,8 @@
 
         this.load.spritesheet('dude', 'assets/dude3.fw.png', {frameWidth: 32, frameHeight: 48});
         this.load.spritesheet('villain', 'assets/villain3.fw.png', {frameWidth: 32, frameHeight: 48});
+        this.load.spritesheet('explosion', 'assets/explosion_sprite.png', {frameWidth: 256, frameHeight: 256});
+        this.load.spritesheet('respawn', 'assets/respawn.png', {frameWidth: 128, frameHeight: 128});
     }
 
     function createAnim(context, the_key='left', sprite='dude', start=0, stop=3, fps=10, rep=-1) {
@@ -209,6 +212,8 @@
         // The player and its settings
         player = this.physics.add.sprite(100, 450, 'dude');
         villain = this.physics.add.sprite(700, 150, 'villain');
+        explosion = this.physics.add.sprite(1000, 1000, 'explosion').setScale(0.5);
+        respawn = this.physics.add.sprite(1000, 1000, 'respawn').setScale(1);
 
         //  Player physics properties
         player.setCollideWorldBounds(true);
@@ -233,6 +238,10 @@
         createStatic(this, 'turn_left_villain', 'villain', 0, 20)
         createStatic(this, 'turn_down_villain', 'villain', 4, 20)
         createStatic(this, 'turn_right_villain', 'villain', 8, 20)
+
+        createAnim(this, 'explode', 'explosion', 0, 33, 90, 0)
+        createAnim(this, 'respawning', 'respawn', 0, 33, 90, 0)
+
 
         //  Input Events
         cursors = this.input.keyboard.createCursorKeys();
@@ -326,6 +335,10 @@
             scoreTextVillain_OBJECT.set(prevText.substring(0, prevText.length - getDigits(prevScore)) + scoreVillain_OBJECT.get());
 
             // reset player to initial state ( == respawn)
+            respawn.x = coordsX;
+            respawn.y = coordsY - 15;
+            respawn.anims.play('respawning', true);
+
             player.x = coordsX;
             player.y = coordsY;
             player.setTint(0xFFFFFF);
@@ -454,8 +467,11 @@
     function get_object (gameOver_OBJECT, has_item_OBJECT, item_OBJECT, player, brick) {
         // player dies if they touch any moving brick (pushing is not considered movement)
         if (brick.body.velocity.x !== 0 || brick.body.velocity.y !== 0) {
-            // TODO: smarter way to inform about respawn (create something as a grave...)
-            apple_collectables.create(player.x, player.y, 'apple');
+            explosion.x = player.x + 5;
+            explosion.y = player.y + 10;
+            explosion.anims.play('explode', true);
+
+
             gameOver_OBJECT.set(true);
         }
 
