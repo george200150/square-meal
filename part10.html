@@ -2,9 +2,8 @@
 <html lang="en"> 
 <head> 
     <meta charset="UTF-8" />
-    <title>Making your first Phaser 3 Game - Part 10</title>
-    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
-<!--    <script src="phaser.js"></script>-->
+    <title>Square Meal</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.52.0/dist/phaser.js"></script>
     <style type="text/css">
         body {
             margin: 0;
@@ -14,6 +13,19 @@
 <body>
 
 <script type="text/javascript">
+
+    sceneA =  {
+        key: 'SceneA',
+        preload: preload,
+        create: create,
+        update: update
+    };
+
+    sceneB =  {
+        key: 'SceneB',
+        preload: preloadEnd,
+        create: createEnd,
+    };
 
     const config = {
         type: Phaser.AUTO,
@@ -28,16 +40,13 @@
                 debug: false
             }
         },
-        scene: {
-            preload: preload,
-            create: create,
-            update: update
-        },
+        scene: [sceneA, sceneB],
         input: {
             keyboard: {
                 target: window
             }
-        }
+        },
+        title: 'Square Meal'
     };
 
     let keyObj_W;
@@ -96,7 +105,6 @@
         set: (value)=>{last_direction_pressed = value; }
     };
 
-
     // player2's features
     let villain_isDead_OBJECT = {
         get: ()=>{return isVillainDead},
@@ -123,7 +131,136 @@
         set: (value)=>{last_direction_pressed_villain = value; }
     };
 
+    function preloadEnd () {
+        this.load.image('bkgFleurs', 'assets/fleurs.fw.png');
+        this.load.image('button', 'assets/button.fw.png');
+    }
+
+    let preloadedScene;
     function preload () {
+        console.log('function preload () {')
+        console.log(this)
+        preloadedScene = this;
+        var progressBar = this.add.graphics();
+        var progressBox = this.add.graphics();
+        progressBox.fillStyle(0x222222, 0.8);
+        progressBox.fillRect(240, 270, 320, 50);
+
+        var width = this.cameras.main.width;
+        var height = this.cameras.main.height;
+        var loadingText = this.make.text({
+            x: width / 2,
+            y: height / 2 - 50,
+            text: 'Loading...',
+            style: {
+                font: '20px monospace',
+                fill: '#ffffff'
+            }
+        });
+        loadingText.setOrigin(0.5, 0.5);
+
+        var percentText = this.make.text({
+            x: width / 2,
+            y: height / 2 - 5,
+            text: '0%',
+            style: {
+                font: '18px monospace',
+                fill: '#ffffff'
+            }
+        });
+        percentText.setOrigin(0.5, 0.5);
+
+        var assetText = this.make.text({
+            x: width / 2,
+            y: height / 2 + 50,
+            text: '',
+            style: {
+                font: '18px monospace',
+                fill: '#ffffff'
+            }
+        });
+
+        assetText.setOrigin(0.5, 0.5);
+
+        this.load.on('progress', function (value) {
+            percentText.setText(parseInt(value * 100) + '%');
+            progressBar.clear();
+            progressBar.fillStyle(0xffffff, 1);
+            progressBar.fillRect(250, 280, 300 * value, 30);
+        });
+
+        this.load.on('fileprogress', function (file) {
+            assetText.setText('Loading asset: ' + file.key);
+        });
+
+        this.load.on('complete', function () {
+            progressBar.destroy();
+            progressBox.destroy();
+            loadingText.destroy();
+            percentText.destroy();
+            assetText.destroy();
+        });
+
+        var progressBar = this.add.graphics();
+        var progressBox = this.add.graphics();
+        progressBox.fillStyle(0x222222, 0.8);
+        progressBox.fillRect(240, 270, 320, 50);
+
+        var width = this.cameras.main.width;
+        var height = this.cameras.main.height;
+        var loadingText = this.make.text({
+            x: width / 2,
+            y: height / 2 - 50,
+            text: 'Loading...',
+            style: {
+                font: '20px monospace',
+                fill: '#ffffff'
+            }
+        });
+        loadingText.setOrigin(0.5, 0.5);
+
+        var percentText = this.make.text({
+            x: width / 2,
+            y: height / 2 - 5,
+            text: '0%',
+            style: {
+                font: '18px monospace',
+                fill: '#ffffff'
+            }
+        });
+        percentText.setOrigin(0.5, 0.5);
+
+        var assetText = this.make.text({
+            x: width / 2,
+            y: height / 2 + 50,
+            text: '',
+            style: {
+                font: '18px monospace',
+                fill: '#ffffff'
+            }
+        });
+
+        assetText.setOrigin(0.5, 0.5);
+
+        this.load.on('progress', function (value) {
+            percentText.setText(parseInt(value * 100) + '%');
+            progressBar.clear();
+            progressBar.fillStyle(0xffffff, 1);
+            progressBar.fillRect(250, 280, 300 * value, 30);
+        });
+
+        this.load.on('fileprogress', function (file) {
+            assetText.setText('Loading asset: ' + file.key);
+        });
+
+        this.load.on('complete', function () {
+            progressBar.destroy();
+            progressBox.destroy();
+            loadingText.destroy();
+            percentText.destroy();
+            assetText.destroy();
+        });
+
         this.load.image('bkg', 'assets/background.png');
         this.load.image('border', 'assets/border.png');
         this.load.image('border_vertical', 'assets/border_vertical.png');
@@ -178,18 +315,36 @@
         });
     }
 
+    let helloButton;
+    let fleurs;
+    function createEnd () {
+        fleurs = this.add.image(400, 300, 'bkgFleurs');
+        helloButton = this.add.image(400, 300, 'button');
+        helloButton.setInteractive();
+        helloButton.on('pointerup', () => { clickedButton(); });
+    }
+
+    function clickedButton() {
+        console.log("does nothing")
+        preloadedScene.scene.start("SceneA")
+        helloButton.destroy();
+        fleurs.destroy();
+        ended_and_shown = false;
+        score = 0;
+        scoreVillain = 0;
+    }
+
+    let createdScene;
     function create () {
-        //  A simple background for our game
+        createdScene = this;
+
         this.add.image(400, 300, 'bkg');
 
-        //  The walls group contains the ground and the 2 ledges we can jump on
         walls = this.physics.add.staticGroup();
         steel_bricks = this.physics.add.staticGroup();
         wood_bricks = this.physics.add.staticGroup();
         apple_collectables = this.physics.add.staticGroup();
 
-        //  Here we create the ground.
-        //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
         walls.create(200, 584, 'border').setScale(1).refreshBody();
         walls.create(600, 584, 'border').setScale(1).refreshBody();
 
@@ -208,18 +363,14 @@
         wood_bricks.create(58, 542, 'wood').setScale(1).refreshBody();
         wood_bricks.create(742, 542, 'wood').setScale(1).refreshBody();*/
 
-
-        // The player and its settings
         player = this.physics.add.sprite(100, 450, 'dude');
         villain = this.physics.add.sprite(700, 150, 'villain');
         explosion = this.physics.add.sprite(1000, 1000, 'explosion').setScale(0.5);
         respawn = this.physics.add.sprite(1000, 1000, 'respawn').setScale(1);
 
-        //  Player physics properties
         player.setCollideWorldBounds(true);
         villain.setCollideWorldBounds(true);
 
-        //  Our player animations, turning, walking left and walking right.
         createAnim(this, 'up', 'dude', 12, 15, 10, -1)
         createAnim(this, 'left', 'dude', 0, 3, 10, -1)
         createAnim(this, 'down', 'dude', 4, 7, 10, -1)
@@ -229,7 +380,6 @@
         createStatic(this, 'turn_down', 'dude', 4, 20)
         createStatic(this, 'turn_right', 'dude', 8, 20)
 
-        //  Our villain animations, turning, walking left and walking right.
         createAnim(this, 'up_villain', 'villain', 12, 15, 10, -1)
         createAnim(this, 'left_villain', 'villain', 0, 3, 10, -1)
         createAnim(this, 'down_villain', 'villain', 4, 7, 10, -1)
@@ -265,7 +415,6 @@
         }, null, this);
 
         // players can pick up bricks
-        // this.physics.add.overlap(player, steel_bricks, (dude, brick)=>{get_object(isDeadDudeCallback, dude, brick)}, null, this);
         this.physics.add.overlap(player, steel_bricks, (dude, brick) => {
             get_object(isDead_OBJECT, player_has_item_OBJECT, player_item_OBJECT, dude, brick)
         }, null, this);
@@ -351,15 +500,8 @@
 
     function throwBrick(player, has_item_OBJECT, item_OBJECT, last_direction_pressed) {
         has_item_OBJECT.set(false);
-        let brick;
-        let brick_velocityX = 0;
-        let brick_velocityY = 0;
-        let bricks;
-        let brickX;
-        let brickY;
-        let material;
-        let drag;
-        let baseSpeed;
+        let brick, brick_velocityX = 0, brick_velocityY = 0;
+        let bricks, brickX, brickY, material, drag, baseSpeed;
 
         // throw the brick in the direction the player is facing
         if (last_direction_pressed === 'left') {
@@ -447,8 +589,9 @@
 
         if (steel_bricks.countActive(true) === 0 && wood_bricks.countActive(true) === 0 && player_has_item === false && villain_has_item === false) {
             // cannot score other way than collecting apples => finalise
-            showEnd()
             this.physics.pause();
+            this.physics.disableUpdate()
+            showEnd()
             return;
         }
 
@@ -462,16 +605,12 @@
             last_direction_pressed_villain_OBJECT)
     }
 
-
-
     function get_object (gameOver_OBJECT, has_item_OBJECT, item_OBJECT, player, brick) {
         // player dies if they touch any moving brick (pushing is not considered movement)
         if (brick.body.velocity.x !== 0 || brick.body.velocity.y !== 0) {
             explosion.x = player.x + 5;
             explosion.y = player.y + 10;
             explosion.anims.play('explode', true);
-
-
             gameOver_OBJECT.set(true);
         }
 
@@ -486,7 +625,6 @@
             } else {
                 item_OBJECT.set(null);
             }
-
             brick.disableBody(true, true);
         }
     }
@@ -521,6 +659,8 @@
                 alert("TIE!");
             }
             ended_and_shown = true;
+            preloadedScene.scene.start('SceneB');
+            createdScene.input.keyboard.removeCapture('W,S,A,D,SPACE');
         }
     }
 
